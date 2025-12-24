@@ -518,15 +518,17 @@ function saveOffer() {
     storage.addOffer(offer);
     showNotification('Teklif başarıyla kaydedildi.', 'success');
     clearOffer();
+
+    // Navigate to History view so the user sees the saved offer
+    const historyBtn = document.querySelector('[data-section="history"]');
+    if (historyBtn) {
+        historyBtn.click();
+    } else if (typeof renderHistory === 'function') {
+        renderHistory();
+    }
 }
 
 function clearOffer() {
-    if (currentOfferItems.length > 0) {
-        if (!confirm('Tüm bilgiler temizlenecek. Emin misiniz?')) {
-            return;
-        }
-    }
-
     currentOfferItems = [];
     document.getElementById('customerName').value = '';
     document.getElementById('customerTaxNo').value = '';
@@ -647,13 +649,14 @@ document.getElementById('historySearch').addEventListener('input', function() {
 
 // Ortak PDF stilleri
 const pdfStyles = {
-    titleRight: { fontSize: 10, bold: true, color: '#303030', letterSpacing: 0.6 },
+    titleRight: { fontSize: 20, bold: true, color: '#303030', letterSpacing: 0.6 },
     companyName: { bold: true, fontSize: 11, lineHeight: 1.35, color: '#303a44' },
     boxTitle: { bold: true, fontSize: 9, color: '#4d4d4d', margin: [0, 0, 0, 2], lineHeight: 1.2 },
     boxTitleBold: { bold: true, fontSize: 9.5, color: '#303a44', margin: [0, 0, 0, 4], lineHeight: 1.25 },
     tableHeader: { bold: true, fontSize: 7.4, color: '#303a44', lineHeight: 1.3 },
     tableBody: { fontSize: 7.4, color: '#303030' },
-    customerInfo: { fontSize: 9, bold: true, lineHeight: 1.35, color: '#2d2d2d' },
+    customerInfo: { fontSize: 10, bold: true, lineHeight: 1.25, color: '#2d2d2d' },
+    fieldLabel: { fontSize: 8, bold: true, color: '#303a44' },
     customerDetail: { fontSize: 8, lineHeight: 1.35, color: '#555' },
     summaryLabel: { fontSize: 8, lineHeight: 1.45, bold: true, color: '#303a44' },
     summaryValue: { fontSize: 8, lineHeight: 1.45, alignment: 'right', bold: true, color: '#2d2d2d' },
@@ -683,11 +686,11 @@ async function generatePDFFromHistory(offerId) {
                         width: 330,
                         stack: [
                             company.logo ? { image: company.logo, width: 228, margin: [0, 0, 0, 8] } : {},
-                            { text: company.name || 'Firma Adı', style: 'companyName' },
-                            company.address ? { text: company.address, style: 'small', margin: [0, 2, 0, 0] } : {},
-                            company.phone ? { text: company.phone, style: 'small', margin: [0, 2, 0, 0] } : {},
-                            company.email ? { text: company.email, style: 'small', margin: [0, 2, 0, 0] } : {},
-                            company.taxNo ? { text: company.taxNo, style: 'small', margin: [0, 2, 0, 0] } : {}
+                            { text: company.name || 'Firma Adı', style: 'companyName', margin: [0, 0, 0, 6] },
+                            company.address ? { text: company.address, style: 'customerDetail', margin: [0, 0, 0, 6] } : {},
+                            company.phone ? { text: company.phone, style: 'customerDetail', margin: [0, 0, 0, 6] } : {},
+                            company.email ? { text: company.email, style: 'customerDetail', margin: [0, 0, 0, 6] } : {},
+                            company.taxNo ? { stack: [ { text: 'Vergi No:', style: 'fieldLabel' }, { text: company.taxNo || '', style: 'customerDetail', margin: [0, 0, 0, 8] } ] } : {}
                         ]
                     },
                     {
@@ -697,11 +700,11 @@ async function generatePDFFromHistory(offerId) {
                             { text: 'TEKLİF', style: 'titleRight', alignment: 'right', margin: [0, 0, 0, 8] },
                             { canvas: [ { type: 'line', x1: 0, y1: 0, x2: 170, y2: 0, lineWidth: 1.2, lineColor: '#b3b3b3' } ], margin: [0, 0, 0, 10] },
                             { text: 'MÜŞTERİ', style: 'boxTitleBold', margin: [0, 0, 0, 6], alignment: 'left' },
-                            { text: offer.customer.name, style: 'customerInfo', margin: [0, 0, 0, 4], alignment: 'left' },
-                            offer.customer.taxNo ? { text: offer.customer.taxNo, style: 'customerDetail', margin: [0, 0, 0, 2], alignment: 'left' } : {},
-                            offer.customer.address ? { text: offer.customer.address, style: 'customerDetail', margin: [0, 0, 0, 2], alignment: 'left' } : {},
-                            offer.customer.phone ? { text: offer.customer.phone, style: 'customerDetail', margin: [0, 0, 0, 2], alignment: 'left' } : {},
-                            offer.customer.email ? { text: offer.customer.email, style: 'customerDetail', margin: [0, 0, 0, 8], alignment: 'left' } : {},
+                            { text: offer.customer.name, style: 'customerInfo', margin: [0, 0, 0, 6], alignment: 'left' },
+                            offer.customer.address ? { text: offer.customer.address, style: 'customerDetail', margin: [0, 0, 0, 6], alignment: 'left' } : {},
+                            offer.customer.phone ? { text: offer.customer.phone, style: 'customerDetail', margin: [0, 0, 0, 6], alignment: 'left' } : {},
+                            offer.customer.email ? { text: offer.customer.email, style: 'customerDetail', margin: [0, 0, 0, 6], alignment: 'left' } : {},
+                            offer.customer.taxNo ? { stack: [ { text: 'Vergi No:', style: 'fieldLabel' }, { text: offer.customer.taxNo || '', style: 'customerDetail', margin: [0, 0, 0, 8], alignment: 'left' } ] } : {},
                             { canvas: [ { type: 'line', x1: 0, y1: 0, x2: 170, y2: 0, lineWidth: 1, lineColor: '#b3b3b3' } ], margin: [0, 6, 0, 6] },
                             { columns: [
                                 { text: 'TEKLİF TARİHİ', style: 'boxTitle', fontSize: 8, margin: [0, 0, 8, 0], alignment: 'left' },
@@ -740,6 +743,7 @@ async function generatePDFFromHistory(offerId) {
             const docDefinition = {
                 pageSize: 'A4',
                 pageMargins: [40, 40, 40, 60],
+                defaultStyle: { font: 'Roboto' },
                 content: [
                     columnsHeader,
                     { text: ' ', margin: [0, 16] },
@@ -783,7 +787,8 @@ async function generatePDFFromHistory(offerId) {
                 ],
                 styles: pdfStyles,
                 footer: function(currentPage, pageCount) {
-                    return { text: `${new Date(offer.date).toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' })} (antren\u00f6de haz\u0131rlanm\u0131\u015ft\u0131r.)`, style: 'info', alignment: 'left', margin: [40, 0, 0, 0] };
+                    const pageText = (pageCount && pageCount > 1) ? `Sayfa ${currentPage} / ${pageCount}` : `Sayfa ${currentPage}`;
+                    return { text: pageText, style: 'info', alignment: 'right', margin: [40, 0, 40, 0] };
                 }
             };
 

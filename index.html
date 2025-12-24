@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="tr">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Fiyat Teklifi Uygulaması</title>
+        <link rel="stylesheet" href="style.css">
+        <script
+            src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+        <!-- jsPDF AutoTable eklentisi: tablo çizimi için gerekli -->
+        <script
+            src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+        <script
+            src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+        <!-- pdfmake: Unicode (Türkçe) destekli, modern PDF üretimi -->
+        <script
+            src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+        <script
+            src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.min.js"></script>
+    </head>
+    <body>
+        <div class="container">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <h2>📋 Menü</h2>
+                <nav>
+                    <button class="nav-btn active" data-section="new-offer">Yeni
+                        Teklif</button>
+                    <button class="nav-btn" data-section="products">Ürün
+                        Yönetimi</button>
+                    <button class="nav-btn" data-section="company">Firma
+                        Bilgileri</button>
+                    <button class="nav-btn" data-section="history">Geçmiş
+                        Teklifler</button>
+                </nav>
+                <div class="sidebar-footer">
+                    <button class="btn-export-data">📥 Verileri Dışa
+                        Aktar</button>
+                    <button class="btn-import-data">📤 Verileri İçe
+                        Aktar</button>
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="main-content">
+
+                <!-- Yeni Teklif Bölümü -->
+                <section id="new-offer" class="section active">
+                    <div class="section-header">
+                        <h1>Yeni Fiyat Teklifi</h1>
+                        <div class="action-buttons">
+                            <button class="btn btn-secondary"
+                                id="clearOffer">🗑️ Temizle</button>
+                            <button class="btn btn-primary" id="saveOffer">💾
+                                Teklifi Kaydet</button>
+                        </div>
+                    </div>
+
+                    <!-- Teklif Formu -->
+                    <div class="offer-form">
+                        <!-- Müşteri Bilgileri -->
+                        <div class="form-card">
+                            <h3>Müşteri Bilgileri</h3>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label>Firma/Kişi Adı *</label>
+                                    <input type="text" id="customerName"
+                                        placeholder="ABC Şirketi" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Vergi No / TC No</label>
+                                    <input type="text" id="customerTaxNo"
+                                        placeholder="1234567890">
+                                </div>
+                                <div class="form-group full-width">
+                                    <label>Adres</label>
+                                    <textarea id="customerAddress" rows="2"
+                                        placeholder="Müşteri adresi"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label>Telefon</label>
+                                    <input type="tel" id="customerPhone"
+                                        placeholder="+90 555 123 45 67">
+                                </div>
+                                <div class="form-group">
+                                    <label>E-posta</label>
+                                    <input type="email" id="customerEmail"
+                                        placeholder="musteri@firma.com">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Ürün Ekleme -->
+                        <div class="form-card">
+                            <h3>Ürün Ekle</h3>
+                            <div class="product-add-section">
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label>Ürün Seç veya Yeni Gir</label>
+                                        <select id="productSelect">
+                                            <option value>-- Yeni Ürün Gir
+                                                --</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Ürün Adı *</label>
+                                        <input type="text" id="productName"
+                                            placeholder="Ürün adı">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Birim</label>
+                                        <select id="productUnit">
+                                            <option>Adet</option>
+                                            <option>Kg</option>
+                                            <option>Metre</option>
+                                            <option>Litre</option>
+                                            <option>Kutu</option>
+                                            <option>Paket</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Miktar *</label>
+                                        <input type="number"
+                                            id="productQuantity" value="1"
+                                            min="0.01" step="0.01">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Birim Fiyat (₺) *</label>
+                                        <input type="number" id="productPrice"
+                                            value="0" min="0" step="0.01">
+                                    </div>
+                                    <div class="form-group kdv-group">
+                                        <label>KDV (%)</label>
+                                        <select id="productTax">
+                                            <option value="0">0%</option>
+                                            <option value="1">1%</option>
+                                            <option value="10">10%</option>
+                                            <option value="20"
+                                                selected>20%</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group form-actions">
+                                        <button
+                                            class="btn btn-primary"
+                                            id="addProduct">➕ Listeye
+                                            Ekle</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Ürün Listesi -->
+                        <div class="form-card">
+                            <h3>Teklif Kalemleri</h3>
+                            <div class="table-responsive">
+                                <table class="products-table"
+                                    id="offerItemsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Ürün Adı</th>
+                                            <th>Birim</th>
+                                            <th>Miktar</th>
+                                            <th>Birim Fiyat</th>
+                                            <!-- İskonto başlığı kaldırıldı -->
+                                            <th>Ara Toplam</th>
+                                            <th>KDV</th>
+                                            <th>Toplam</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="offerItemsBody">
+                                        <tr class="empty-state">
+                                            <td colspan="9">Henüz ürün
+                                                eklenmedi. Yukarıdan ürün
+                                                ekleyebilirsiniz.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Toplam Bilgileri -->
+                        <div class="form-card">
+                            <div class="summary-grid">
+                                <div class="summary-item">
+                                    <span>Ara Toplam:</span>
+                                    <strong id="subtotal">0.00 ₺</strong>
+                                </div>
+                                <!-- İskonto toplamı kaldırıldı -->
+                                <div class="summary-item">
+                                    <span>KDV Toplamı:</span>
+                                    <strong id="totalTax">0.00 ₺</strong>
+                                </div>
+                                <div class="summary-item total">
+                                    <span>GENEL TOPLAM:</span>
+                                    <strong id="grandTotal">0.00 ₺</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Notlar -->
+                        <div class="form-card">
+                            <h3>Ek Notlar</h3>
+                            <textarea id="offerNotes" rows="3"
+                                placeholder="Teklif ile ilgili ek bilgiler, ödeme koşulları vb."></textarea>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Ürün Yönetimi Bölümü -->
+                <section id="products" class="section">
+                    <div class="section-header">
+                        <h1>Ürün Kütüphanesi</h1>
+                        <button class="btn btn-primary" id="addNewProduct">➕
+                            Yeni Ürün</button>
+                    </div>
+
+                    <div class="products-library">
+                        <div class="search-box">
+                            <input type="text" id="productSearch"
+                                placeholder="🔍 Ürün ara...">
+                        </div>
+                        <div class="table-responsive">
+                            <table class="products-table">
+                                <thead>
+                                    <tr>
+                                        <th>Ürün Adı</th>
+                                        <th>Birim</th>
+                                        <th>Birim Fiyat</th>
+                                        <th>KDV %</th>
+                                        <th>İşlemler</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="productsLibraryBody">
+                                    <tr class="empty-state">
+                                        <td colspan="5">Henüz ürün
+                                            eklenmedi.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Firma Bilgileri Bölümü -->
+                <section id="company" class="section">
+                    <div class="section-header">
+                        <h1>Firma Bilgileri</h1>
+                        <button class="btn btn-primary" id="saveCompany">💾
+                            Kaydet</button>
+                    </div>
+
+                    <div class="form-card">
+                        <div class="form-grid">
+                            <div class="form-group full-width">
+                                <label>Firma Logosu</label>
+                                <input type="file" id="companyLogo"
+                                    accept="image/*">
+                                <div id="logoPreview"
+                                    class="logo-preview"></div>
+                            </div>
+                            <div class="form-group">
+                                <label>Firma Adı *</label>
+                                <input type="text" id="companyName"
+                                    placeholder="Şirketinizin adı">
+                            </div>
+                            <div class="form-group">
+                                <label>Vergi No</label>
+                                <input type="text" id="companyTaxNo"
+                                    placeholder="1234567890">
+                            </div>
+                            <div class="form-group full-width">
+                                <label>Adres</label>
+                                <textarea id="companyAddress" rows="3"
+                                    placeholder="Firma adresi"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Telefon</label>
+                                <input type="tel" id="companyPhone"
+                                    placeholder="+90 555 123 45 67">
+                            </div>
+                            <div class="form-group">
+                                <label>E-posta</label>
+                                <input type="email" id="companyEmail"
+                                    placeholder="info@firma.com">
+                            </div>
+                            <div class="form-group">
+                                <label>Web Sitesi</label>
+                                <input type="url" id="companyWebsite"
+                                    placeholder="www.firma.com">
+                            </div>
+                            <div class="form-group">
+                                <label>Vergi Dairesi</label>
+                                <input type="text" id="companyTaxOffice"
+                                    placeholder="Örn: Kadıköy">
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Geçmiş Teklifler Bölümü -->
+                <section id="history" class="section">
+                    <div class="section-header">
+                        <h1>Geçmiş Teklifler</h1>
+                        <div class="action-buttons">
+                            <input type="text" id="historySearch"
+                                placeholder="🔍 Teklif ara..."
+                                class="search-input">
+                        </div>
+                    </div>
+
+                    <div class="history-grid" id="historyGrid">
+                        <div class="empty-state-card">
+                            <p>Henüz kaydedilmiş teklif bulunmuyor.</p>
+                        </div>
+                    </div>
+                </section>
+
+            </main>
+        </div>
+
+        <!-- PDF Preview (Hidden) -->
+        <div id="pdfPreview"
+            style="position: absolute; left: -9999px; width: 210mm;">
+            <!-- Bu alan PDF oluşturulurken kullanılacak -->
+        </div>
+
+        <!-- Modal: Ürün Düzenle/Ekle -->
+        <div id="productModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="productModalTitle">Yeni Ürün Ekle</h2>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Ürün Adı *</label>
+                        <input type="text" id="modalProductName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Birim</label>
+                        <select id="modalProductUnit">
+                            <option>Adet</option>
+                            <option>Kg</option>
+                            <option>Metre</option>
+                            <option>Litre</option>
+                            <option>Kutu</option>
+                            <option>Paket</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Birim Fiyat (₺) *</label>
+                        <input type="number" id="modalProductPrice" value="0"
+                            min="0" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Varsayılan KDV (%)</label>
+                        <select id="modalProductTax">
+                            <option value="0">0%</option>
+                            <option value="1">1%</option>
+                            <option value="10">10%</option>
+                            <option value="20" selected>20%</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary modal-close">İptal</button>
+                    <button class="btn btn-primary"
+                        id="saveProductModal">Kaydet</button>
+                </div>
+            </div>
+        </div>
+
+        <script src="app.js"></script>
+    </body>
+</html>

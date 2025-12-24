@@ -16,18 +16,4 @@ Notes
 
 ---
 
-**Note**: This project is intended for educational and personal use. For commercial use, integrate with proper accounting systems.
-
-## 🎯 Roadmap
-
-- [ ] Multi-language support
-- [ ] Theme switching (Dark mode)
-- [ ] Excel import/export
-- [ ] Email sending integration
-- [ ] Cloud sync (optional)
-- [ ] Template system
-- [ ] Automatic backups
-
----
-
 If you find this project useful, please give it a star ⭐

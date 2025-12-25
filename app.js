@@ -436,10 +436,11 @@ function renderOfferItems() {
     }
 
     tbody.innerHTML = currentOfferItems.map(item => {
-        const subtotal = item.quantity * item.price;
-        const afterDiscount = subtotal;
-        const taxAmount = afterDiscount * (item.tax / 100);
-        const total = afterDiscount + taxAmount;
+        // Fiyat KDV dahil, toplam = adet * fiyat
+        const itemTotal = item.quantity * item.price;
+        // KDV tutarı: itemTotal * (oran / (100 + oran))
+        const itemTax = itemTotal * (item.tax / (100 + item.tax));
+        const itemSubtotal = itemTotal - itemTax;
 
         return `
             <tr>
@@ -447,12 +448,11 @@ function renderOfferItems() {
                 <td>${item.unit}</td>
                 <td>${item.quantity}</td>
                 <td>${formatCurrency(item.price)}</td>
-                <!-- İskonto hücresi kaldırıldı -->
-                <td>${formatCurrency(afterDiscount)}</td>
-                <td>%${item.tax} (${formatCurrency(taxAmount)})</td>
-                <td><strong>${formatCurrency(total)}</strong></td>
+                <td>${formatCurrency(itemSubtotal)}</td>
+                <td>%${item.tax}</td>
+                <td><strong>${formatCurrency(itemTotal)}</strong></td>
                 <td>
-                    <button class="btn btn-danger btn-icon" onclick="removeOfferItem('${item.id}')">🗑️</button>
+                    <button class=\"btn btn-danger btn-icon\" onclick=\"removeOfferItem('${item.id}')\">🗑️</button>
                 </td>
             </tr>
         `;
@@ -468,17 +468,18 @@ function removeOfferItem(id) {
 function calculateTotals() {
     let subtotal = 0;
     let totalTax = 0;
+    let grandTotal = 0;
 
     currentOfferItems.forEach(item => {
-        const itemSubtotal = item.quantity * item.price;
-        const afterDiscount = itemSubtotal;
-        const taxAmount = afterDiscount * (item.tax / 100);
+        // Fiyat KDV dahil, toplam = adet * fiyat
+        const itemTotal = item.quantity * item.price;
+        const itemTax = itemTotal * (item.tax / (100 + item.tax));
+        const itemSubtotal = itemTotal - itemTax;
 
         subtotal += itemSubtotal;
-        totalTax += taxAmount;
+        totalTax += itemTax;
+        grandTotal += itemTotal;
     });
-
-    const grandTotal = subtotal + totalTax;
 
     document.getElementById('subtotal').textContent = formatCurrency(subtotal);
     document.getElementById('totalTax').textContent = formatCurrency(totalTax);
@@ -726,16 +727,14 @@ async function generatePDFFromHistory(offerId) {
                     { text: 'Toplam', style: 'tableHeader', alignment: 'right' }
                 ],
                 ...offer.items.map(item => {
-                    const subtotal = item.quantity * item.price;
-                    const afterDiscount = subtotal;
-                    const taxAmount = afterDiscount * (item.tax / 100);
-                    const total = afterDiscount + taxAmount;
+                    // Fiyat KDV dahil, toplam = adet * fiyat
+                    const itemTotal = item.quantity * item.price;
                     return [
                         { text: item.name, style: 'tableBody' },
                         { text: `${item.quantity} ${item.unit}`, style: 'tableBody', alignment: 'center' },
                         { text: formatCurrency(item.price), style: 'tableBody', alignment: 'right' },
                         { text: `%${item.tax}`, style: 'tableBody', alignment: 'center' },
-                        { text: formatCurrency(total), style: 'tableBody', alignment: 'right' }
+                        { text: formatCurrency(itemTotal), style: 'tableBody', alignment: 'right' }
                     ];
                 })
             ];

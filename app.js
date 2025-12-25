@@ -435,22 +435,18 @@ function renderOfferItems() {
         return;
     }
 
-    tbody.innerHTML = currentOfferItems.map(item => {
-        // Fiyat KDV dahil, toplam = adet * fiyat
+    tbody.innerHTML = currentOfferItems.map((item, idx) => {
+        // Fiyat KDV'siz, toplam = adet * fiyat
         const itemTotal = item.quantity * item.price;
-        // KDV tutarı: itemTotal * (oran / (100 + oran))
-        const itemTax = itemTotal * (item.tax / (100 + item.tax));
-        const itemSubtotal = itemTotal - itemTax;
-
         return `
             <tr>
+                <td>${idx + 1}</td>
                 <td>${item.name}</td>
                 <td>${item.unit}</td>
                 <td>${item.quantity}</td>
                 <td>${formatCurrency(item.price)}</td>
-                <td>${formatCurrency(itemSubtotal)}</td>
                 <td>%${item.tax}</td>
-                <td><strong>${formatCurrency(itemTotal)}</strong></td>
+                <td>${formatCurrency(itemTotal)}</td>
                 <td>
                     <button class=\"btn btn-danger btn-icon\" onclick=\"removeOfferItem('${item.id}')\">🗑️</button>
                 </td>
@@ -471,15 +467,13 @@ function calculateTotals() {
     let grandTotal = 0;
 
     currentOfferItems.forEach(item => {
-        // Fiyat KDV dahil, toplam = adet * fiyat
-        const itemTotal = item.quantity * item.price;
-        const itemTax = itemTotal * (item.tax / (100 + item.tax));
-        const itemSubtotal = itemTotal - itemTax;
-
+        // Fiyat KDV'siz, toplam = adet * fiyat
+        const itemSubtotal = item.quantity * item.price;
+        const itemTax = itemSubtotal * (item.tax / 100);
         subtotal += itemSubtotal;
         totalTax += itemTax;
-        grandTotal += itemTotal;
     });
+    grandTotal = subtotal + totalTax;
 
     document.getElementById('subtotal').textContent = formatCurrency(subtotal);
     document.getElementById('totalTax').textContent = formatCurrency(totalTax);
@@ -727,7 +721,7 @@ async function generatePDFFromHistory(offerId) {
                     { text: 'Toplam', style: 'tableHeader', alignment: 'right' }
                 ],
                 ...offer.items.map(item => {
-                    // Fiyat KDV dahil, toplam = adet * fiyat
+                    // Fiyat KDV'siz, toplam = adet * fiyat
                     const itemTotal = item.quantity * item.price;
                     return [
                         { text: item.name, style: 'tableBody' },
@@ -738,6 +732,17 @@ async function generatePDFFromHistory(offerId) {
                     ];
                 })
             ];
+
+            // PDF için alt toplamları yeniden hesapla (KDV'siz fiyatlar üzerinden)
+            let subtotal = 0;
+            let totalTax = 0;
+            offer.items.forEach(item => {
+                const itemSubtotal = item.quantity * item.price;
+                const itemTax = itemSubtotal * (item.tax / 100);
+                subtotal += itemSubtotal;
+                totalTax += itemTax;
+            });
+            const grandTotal = subtotal + totalTax;
 
             const docDefinition = {
                 pageSize: 'A4',
@@ -773,11 +778,10 @@ async function generatePDFFromHistory(offerId) {
                             {
                                 width: 200,
                                 stack: [
-                                    { columns: [{ text: 'ARA TOPLAM', style: 'summaryLabel', width: '*' }, { text: formatCurrency(offer.totals.subtotal), style: 'summaryValue', width: 'auto' }], margin: [0, 0, 0, 6] },
-                                    // BRUT TOPLAM kaldırıldı
-                                    { columns: [{ text: 'TOPLAM K.D.V', style: 'summaryLabel', width: '*' }, { text: formatCurrency(offer.totals.tax), style: 'summaryValue', width: 'auto' }], margin: [0, 0, 0, 10] },
+                                    { columns: [{ text: 'ARA TOPLAM', style: 'summaryLabel', width: '*' }, { text: formatCurrency(subtotal), style: 'summaryValue', width: 'auto' }], margin: [0, 0, 0, 6] },
+                                    { columns: [{ text: 'TOPLAM K.D.V', style: 'summaryLabel', width: '*' }, { text: formatCurrency(totalTax), style: 'summaryValue', width: 'auto' }], margin: [0, 0, 0, 10] },
                                     { canvas: [ { type: 'line', x1: 0, y1: 0, x2: 200, y2: 0, lineWidth: 1, lineColor: '#b3b3b3' } ], margin: [0, 2, 0, 6] },
-                                    { columns: [{ text: 'GENEL TOPLAM', style: 'summaryLabelBold', width: '*' }, { text: formatCurrency(offer.totals.total), style: 'summaryValueBold', width: 'auto' }], margin: [0, 0, 0, 0] }
+                                    { columns: [{ text: 'GENEL TOPLAM', style: 'summaryLabelBold', width: '*' }, { text: formatCurrency(grandTotal), style: 'summaryValueBold', width: 'auto' }], margin: [0, 0, 0, 0] }
                                 ]
                             }
                         ]
